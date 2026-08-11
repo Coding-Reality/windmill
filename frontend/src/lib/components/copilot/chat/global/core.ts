@@ -21,6 +21,7 @@ import {
 	WorkspaceService
 } from '$lib/gen'
 import { createTwoFilesPatch } from 'diff'
+import type { ArtifactVersionTarget } from '$lib/components/sessions/previewRouter'
 import { $ScriptLang } from '$lib/gen/schemas.gen'
 import type {
 	AppWithLastVersion,
@@ -1253,7 +1254,8 @@ ${
 		: `- When the user raises how a raw app looks (something is off, or they want the design or layout improved) and their description alone isn't specific enough to pinpoint the problem, ask them to paste or drop a screenshot of it into the chat before changing anything.`
 }
 - open_page opens its page as a tab in the side-panel preview next to the chat — the only way to show one of these pages there (open_preview only handles editable items). Changing filters on a page already open updates that same tab; only pass new_tab when the user explicitly asks for a separate tab.
-- create_artifact saves a persistent markdown document (a planning doc, design write-up, spec, or other longer structured output) shown in the session preview panel. Prefer it over a long inline reply for content the user will revisit; keep brief answers inline. To revise one, call list_artifacts then read_artifact for the current content, then update_artifact to overwrite it — never create a second artifact for the same document. Each content change is saved as a version, keeping the most recent ones: use list_artifact_versions and read_artifact's version argument to recover earlier wording the user asks to go back to, rather than rewriting it from memory. list_artifact_versions is the source of truth for what is still available — do not assume a version that is not listed.`
+- create_artifact saves a persistent markdown document (a planning doc, design write-up, spec, or other longer structured output) shown in the session preview panel. Prefer it over a long inline reply for content the user will revisit; keep brief answers inline. To revise one, call list_artifacts then read_artifact for the current content, then update_artifact to overwrite it — never create a second artifact for the same document. Each content change is saved as a version, keeping the most recent ones: use list_artifact_versions and read_artifact's version argument to recover earlier wording the user asks to go back to, rather than rewriting it from memory. list_artifact_versions is the source of truth for what is still available — do not assume a version that is not listed.
+- The artifact whose \`role\` is \`plan\` is this session's plan document — one per session, surviving \`/clear\` — and \`approvedVersion\` is the version the user signed off. Below \`version\` means the current text is a proposal they have not agreed to, usually one they turned down; absent means nothing here was ever approved. In either case never describe the current text as agreed or build from it: ask what they want changed, or read the version they did agree to with read_artifact. An agreed plan is an ordinary artifact: revise it the same way, and do not call exit_plan_mode to amend it — that tool only exists while plan mode is active. Update it when the work parts ways with it (a step turns out unnecessary, an approach has to change, scope grows), not after every step you complete. Never quietly rewrite it to describe what you already built: say in your reply how the work now differs from the approved plan, then update the document. Updating it asks the user to approve nothing, so that sentence in your reply is their only chance to object before you keep building.`
 			: ''
 	}
 
@@ -4021,7 +4023,7 @@ export type GlobalToolHelpers = SessionToolHelpers & {
 	// modifiedItemsMask.ts); undefined when the chat doesn't track them (the global
 	// side-panel chat). Backs open_page's compare-page default preselection.
 	getModifiedItems?: () => string[] | undefined
-	openArtifact?: (artifactId: string, name: string) => void
+	openArtifact?: (artifactId: string, name: string, version?: ArtifactVersionTarget) => void
 }
 
 function sessionIdFromCtx(ctx: { helpers?: unknown }): string | undefined {
