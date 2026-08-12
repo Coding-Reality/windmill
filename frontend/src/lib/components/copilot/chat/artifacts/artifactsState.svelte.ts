@@ -223,8 +223,12 @@ export class SessionArtifactsStore {
 		const { outcome, artifact } = await mutateArtifact(id, (existing) =>
 			existing ? { artifact: { ...existing, approvedVersion: version }, snapshots: [] } : undefined
 		)
-		if (artifact) this.#reflect(artifact)
-		return artifact !== undefined && outcome === 'saved'
+		// Reflected only once it is stored, unlike an ordinary edit, which degrades unpersisted:
+		// content the store lost is still content, but an approval the store lost never happened,
+		// and showing the `plan` pill over it would put the user's name on it anyway.
+		if (!artifact || outcome !== 'saved') return false
+		this.#reflect(artifact)
+		return true
 	}
 
 	/**

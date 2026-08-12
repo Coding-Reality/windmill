@@ -362,6 +362,13 @@ describe('SessionArtifactsStore', () => {
 		put = refuseOnce()
 		expect(await store.approve(plan.id, 1)).toBe(false)
 		put.mockRestore()
+		// And the refusal is not merely reported: an approval reflected in memory anyway would
+		// show the `plan` pill, and tell the model the user signed off, until the next reload.
+		expect(store.artifacts.find((a) => a.id === plan.id)?.approvedVersion).toBeUndefined()
+		expect((await store.get(plan.id))?.approvedVersion).toBeUndefined()
+
+		expect(await store.approve(plan.id, 1)).toBe(true)
+		expect(store.artifacts.find((a) => a.id === plan.id)?.approvedVersion).toBe(1)
 		quiet.mockRestore()
 	})
 
