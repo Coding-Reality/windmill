@@ -15,11 +15,10 @@
 		EXIT_PLAN_MODE_TOOL,
 		isPlanCardTool,
 		planCardState,
+		planVersionTarget,
 		PLAN_CARD_COPY,
 		PLAN_MODE_TEXT_COLOR
 	} from './planMode'
-	import { currentVersion } from './artifacts/artifactsDB'
-	import type { ArtifactVersionTarget } from '$lib/components/sessions/previewRouter'
 	import { Button } from '$lib/components/common'
 	import { markdownProse } from '$lib/components/markdownProse'
 	import { getAiChatManager } from './aiChatManagerContext'
@@ -65,14 +64,8 @@
 			? aiChatManager.artifacts.artifacts.find((a) => a.id === message.planArtifactId)
 			: undefined
 	)
-	// The version this card wrote, not the document's current one, since later proposals move
-	// it on. `'latest'` — never omitted — once that version *is* current: omitting would leave
-	// a reader on an older version, wrong for a button whose job is to show this plan.
-	const planCardVersion = $derived<ArtifactVersionTarget>(
-		planDoc && message.planVersion !== undefined && message.planVersion < currentVersion(planDoc)
-			? message.planVersion
-			: 'latest'
-	)
+	// The version this card wrote, not the document's current one, since later proposals move it on.
+	const planCardVersion = $derived(planVersionTarget(planDoc, message.planVersion))
 	// Keyed by call id: a bare flag would leak the expansion onto the next message reusing
 	// this instance. The plan opens in the preview, so only enter's reason needs expanding.
 	let planToggled = $state<{ id: string | undefined; open: boolean } | undefined>(undefined)

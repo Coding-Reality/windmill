@@ -1,6 +1,8 @@
 import { z } from 'zod'
 import type { ChatCompletionSystemMessageParam } from 'openai/resources/chat/completions.mjs'
 import { artifactOverflowBytes, MAX_ARTIFACT_BYTES } from './artifacts/artifactLimits'
+import { currentVersion } from './artifacts/artifactsDB'
+import type { ArtifactVersionTarget } from '$lib/components/sessions/previewRouter'
 
 const ESCALATE_AFTER_BLOCKS = 3
 
@@ -67,6 +69,18 @@ export function planVersionView(
 				: undefined,
 		backToPlan: approvedElsewhere
 	}
+}
+
+/**
+ * How to open a plan at a particular version — the card's own proposal, or the approved one.
+ * Pins it only while it is behind the document: pinning the current version dresses it as
+ * history, banner and all, and omitting a version would strand the reader wherever they were.
+ */
+export function planVersionTarget(
+	doc: { version?: number } | undefined,
+	wanted: number | undefined
+): ArtifactVersionTarget {
+	return doc && wanted !== undefined && wanted < currentVersion(doc) ? wanted : 'latest'
 }
 
 /** The only posture that refuses work, so the only one colouring the whole trigger: the

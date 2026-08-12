@@ -5,6 +5,7 @@ import {
 	exitPlanModeRejection,
 	isPlanCardTool,
 	planCardState,
+	planVersionTarget,
 	planVersionView,
 	PLAN_MODE_MESSAGES
 } from './planMode'
@@ -157,6 +158,20 @@ describe('planVersionView', () => {
 			bar: undefined,
 			backToPlan: undefined
 		})
+	})
+})
+
+describe('planVersionTarget', () => {
+	it('pins a version only while the document has moved past it', () => {
+		// Pinning the current version would open it dressed as history — the stale-version
+		// banner over the very text the opener meant to show.
+		expect(planVersionTarget({ version: 3 }, 3)).toBe('latest')
+		expect(planVersionTarget({ version: 3 }, 2)).toBe(2)
+		// Nothing approved, or no document to compare against: there is no version to pin.
+		expect(planVersionTarget({ version: 3 }, undefined)).toBe('latest')
+		expect(planVersionTarget(undefined, 2)).toBe('latest')
+		// A single-version document has `version` unset.
+		expect(planVersionTarget({}, 1)).toBe('latest')
 	})
 })
 

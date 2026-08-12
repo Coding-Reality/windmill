@@ -6,7 +6,7 @@
 	import { download, displayDate } from '$lib/utils'
 	import { twMerge } from 'tailwind-merge'
 	import { getAiChatManager } from '../aiChatManagerContext'
-	import { planBadge, PLAN_MODE_TEXT_COLOR } from '../planMode'
+	import { planBadge, planVersionTarget, PLAN_MODE_TEXT_COLOR } from '../planMode'
 	import {
 		artifactFilename,
 		artifactMimeType,
@@ -39,7 +39,7 @@
 	rowTitle={(a) => a.name}
 	separatorAfter={(_, index) => index === planCount - 1 && planCount < orderedArtifacts.length}
 	onPick={(a: PersistedArtifact) =>
-		aiChatManager.openArtifact?.(a.id, a.name, a.approvedVersion ?? 'latest')}
+		aiChatManager.openArtifact?.(a.id, a.name, planVersionTarget(a, a.approvedVersion))}
 >
 	{#snippet row(a)}
 		{@const Icon = rowIcon(a)}
