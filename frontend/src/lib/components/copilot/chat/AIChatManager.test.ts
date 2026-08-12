@@ -453,17 +453,29 @@ describe('AIChatManager plan mode posture', () => {
 			config.callbacks.onNewToken('<new_code>ok</new_code>')
 		})
 
+		// Through the mode switch, not around it: opening the widget runs changeMode(SCRIPT) —
+		// unrelated to plan mode, and never restored — so a posture derived from the mode would
+		// read as lifted here while the user still has Plan selected. changeMode refuses SCRIPT
+		// without a configured model, so the model has to be there for this to be the real path.
+		mocks.getCurrentModel.mockReturnValue({ provider: 'openai', model: 'gpt-4o' })
+		mocks.tryGetCurrentModel.mockReturnValue({ provider: 'openai', model: 'gpt-4o' })
+		manager.changeMode(AIMode.SCRIPT)
+		expect(manager.mode).toBe(AIMode.SCRIPT)
+
 		await manager.sendInlineRequest('tidy this up', 'let a = 1', {
 			startLineNumber: 1,
 			endLineNumber: 1
 		} as any)
 
-		// The posture is the session's, and this widget shares the manager: the tool set is real,
-		// so a gate that cannot see the posture would run every write the chat is holding back.
+		// The tool set handed to this request is real, so a gate that cannot see the posture
+		// would run every write the chat is holding back.
+		expect(manager.planModeActive).toBe(true)
 		expect(sent.callbacks.isPlanModeActive?.()).toBe(true)
-		// The transition is offered — just not here, where there is no card to confirm it with.
-		expect(manager.planMode.tools.map((t) => t.def.function.name)).toContain('exit_plan_mode')
+		// The transition is offered to the chat — just not here, where there is no card to
+		// confirm it with.
 		expect(sent.tools.map((t: any) => t.def.function.name)).not.toContain('exit_plan_mode')
+		manager.changeMode(AIMode.GLOBAL)
+		expect(manager.planMode.tools.map((t) => t.def.function.name)).toContain('exit_plan_mode')
 	})
 
 	it('never auto-accepts an enter_plan_mode card, whichever side of the switch it lands on', async () => {

@@ -587,7 +587,11 @@ export class AIChatManager {
 		this.autonomyMode === AIAutonomyMode.YOLO && this.autoAcceptToolConfirmationsAvailable
 	)
 	planModeAvailable = $derived(this.isSessionChat && supportsPlanMode(this.mode))
-	planModeActive = $derived(this.autonomyMode === AIAutonomyMode.PLAN && this.planModeAvailable)
+	// Deliberately not `planModeAvailable`: the posture is what the user chose in this session,
+	// not a function of which editor the UI has open. Components change `mode` for their own
+	// reasons — the inline widget switches to SCRIPT just to open — and a read-only posture that
+	// lifts itself on an unrelated navigation is no posture at all.
+	planModeActive = $derived(this.autonomyMode === AIAutonomyMode.PLAN && this.isSessionChat)
 	prePlanAutonomyMode = $state<AIAutonomyMode | undefined>(undefined)
 	// The posture's own state — its two tools, the plan document and the planning round.
 	// Everything it needs from this manager goes through the host above.
