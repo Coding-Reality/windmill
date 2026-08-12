@@ -1,7 +1,6 @@
 import { z } from 'zod'
 import type { ChatCompletionSystemMessageParam } from 'openai/resources/chat/completions.mjs'
 import { artifactOverflowBytes, MAX_ARTIFACT_BYTES } from './artifacts/artifactLimits'
-import { currentVersion } from './artifacts/artifactsDB'
 import type { ArtifactVersionTarget } from '$lib/components/sessions/previewRouter'
 
 const ESCALATE_AFTER_BLOCKS = 3
@@ -80,7 +79,9 @@ export function planVersionTarget(
 	doc: { version?: number } | undefined,
 	wanted: number | undefined
 ): ArtifactVersionTarget {
-	return doc && wanted !== undefined && wanted < currentVersion(doc) ? wanted : 'latest'
+	// `version ?? 1` inline, as planVersionView does: shared.ts imports this module, so it has to
+	// stay clear of artifactsDB and the IndexedDB graph behind it (see the note on that import).
+	return doc && wanted !== undefined && wanted < (doc.version ?? 1) ? wanted : 'latest'
 }
 
 /** The only posture that refuses work, so the only one colouring the whole trigger: the
