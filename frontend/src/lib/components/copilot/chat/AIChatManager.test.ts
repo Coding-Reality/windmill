@@ -444,6 +444,28 @@ describe('AIChatManager plan mode posture', () => {
 		expect(manager.prePlanAutonomyMode).toBe(AIAutonomyMode.ACCEPT_EDIT)
 	})
 
+	it('offers the inline widget no plan transition, and keeps the gate closed for it', async () => {
+		const manager = sessionManager()
+		manager.setAutonomyMode(AIAutonomyMode.PLAN)
+		let sent: any
+		mocks.runChatLoop.mockImplementation(async (config: any) => {
+			sent = config
+			config.callbacks.onNewToken('<new_code>ok</new_code>')
+		})
+
+		await manager.sendInlineRequest('tidy this up', 'let a = 1', {
+			startLineNumber: 1,
+			endLineNumber: 1
+		} as any)
+
+		// The posture is the session's, and this widget shares the manager: the tool set is real,
+		// so a gate that cannot see the posture would run every write the chat is holding back.
+		expect(sent.callbacks.isPlanModeActive?.()).toBe(true)
+		// The transition is offered — just not here, where there is no card to confirm it with.
+		expect(manager.planMode.tools.map((t) => t.def.function.name)).toContain('exit_plan_mode')
+		expect(sent.tools.map((t: any) => t.def.function.name)).not.toContain('exit_plan_mode')
+	})
+
 	it('never auto-accepts an enter_plan_mode card, whichever side of the switch it lands on', async () => {
 		// Switching to YOLO answers every pending confirmation — except this one. "Run it
 		// without asking" must not be answered by forcing the user into a read-only posture.

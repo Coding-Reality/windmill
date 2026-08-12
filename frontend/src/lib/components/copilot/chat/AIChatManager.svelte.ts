@@ -2368,7 +2368,12 @@ export class AIChatManager {
 					return base
 				},
 				get tools() {
-					return [...self.tools, ...self.planMode.tools]
+					// Both transitions are confirmation-gated, so a caller with no confirmation
+					// channel (the editor's inline widget) must not be offered them: processToolCall
+					// runs a tool whose confirmation it cannot ask for, which would enter or leave
+					// plan mode on the user's behalf.
+					const planTools = callbacks.requestConfirmation ? self.planMode.tools : []
+					return [...self.tools, ...planTools]
 				},
 				get helpers() {
 					return self.helpers
@@ -2494,7 +2499,11 @@ export class AIChatManager {
 					},
 					onMessageEnd: () => {},
 					setToolStatus: () => {},
-					removeToolStatus: () => {}
+					removeToolStatus: () => {},
+					// The posture belongs to the session, not to one request: this widget shares the
+					// manager, so without it the gate reads "not planning" and every mutating tool
+					// the chat is holding back would run from here instead.
+					isPlanModeActive: () => this.planModeActive
 				},
 				systemMessage
 			}
