@@ -137,6 +137,14 @@ describe('planVersionView', () => {
 			],
 			['behind the plan', plan(2, 3), 1, { badge: undefined, bar: undefined, backToPlan: 2 }],
 			[
+				// Offering v3 here would pin the current version and re-open it under the very
+				// history bar the button exists to leave.
+				'behind a plan approved at the head',
+				plan(3, 3),
+				1,
+				{ badge: undefined, bar: undefined, backToPlan: undefined }
+			],
+			[
 				'between the plan and the head',
 				plan(1, 4),
 				3,

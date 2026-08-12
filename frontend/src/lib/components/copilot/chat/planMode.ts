@@ -49,7 +49,9 @@ export function planVersionView(
 ): {
 	badge: 'plan' | 'draft' | undefined
 	bar: 'approved-with-newer' | 'unapproved-head' | undefined
-	/** The version the history bar offers, when the plan is not what is on screen. */
+	/** The version the history bar offers, when the plan is not what is on screen. Undefined
+	 * when that is simply the latest, which is reached by clearing the pin rather than by
+	 * pinning it — the same rule `planVersionTarget` follows. */
 	backToPlan: number | undefined
 } {
 	const latest = a.version ?? 1
@@ -66,7 +68,7 @@ export function planVersionView(
 			: approvedElsewhere !== undefined && at === latest
 				? 'unapproved-head'
 				: undefined,
-		backToPlan: approvedElsewhere
+		backToPlan: approvedElsewhere === latest ? undefined : approvedElsewhere
 	}
 }
 
