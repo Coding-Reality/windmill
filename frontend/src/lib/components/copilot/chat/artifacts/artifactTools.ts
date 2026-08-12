@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import { createToolDef, type Tool } from '../shared'
 import { artifactOverflowBytes, MAX_ARTIFACT_BYTES, normalizeChangeNote } from './artifactLimits'
-import { currentVersion, type PersistedArtifact } from './artifactsDB'
+import { currentVersion, type ArtifactVersion, type PersistedArtifact } from './artifactsDB'
 import type { ArtifactVersionTarget } from '$lib/components/sessions/previewRouter'
 import { PlanSlotTakenError, type SessionArtifactsStore } from './artifactsState.svelte'
 
@@ -203,7 +203,16 @@ export const artifactTools: Tool<{}>[] = [
 				return JSON.stringify({ success: false, error })
 			}
 			if (parsed.version !== undefined && parsed.version !== currentVersion(artifact)) {
-				const snapshot = await h.artifacts.getVersion(parsed.id, parsed.version, { sessionId })
+				let snapshot: ArtifactVersion | undefined
+				try {
+					snapshot = await h.artifacts.getVersion(parsed.id, parsed.version, { sessionId })
+				} catch {
+					// A read that failed says nothing about whether the version exists, so send the
+					// model back to this same call rather than to list_artifact_versions.
+					const error = `Could not read version ${parsed.version} of "${artifact.name}" — the artifact store is unavailable. Try again.`
+					toolCallbacks.setToolStatus(toolId, { content: error, error })
+					return JSON.stringify({ success: false, error })
+				}
 				if (!snapshot) {
 					// Pruned or never existed; either way the model should re-list rather than retry.
 					const error = `Artifact "${artifact.name}" has no version ${parsed.version}. Call list_artifact_versions for the versions still kept.`
