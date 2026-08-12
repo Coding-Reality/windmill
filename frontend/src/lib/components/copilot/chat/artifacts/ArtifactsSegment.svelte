@@ -4,6 +4,7 @@
 	import SessionStatusPopover from '$lib/components/sessions/SessionStatusPopover.svelte'
 	import { ClipboardList, Code2, Download, FileText, Trash2 } from 'lucide-svelte'
 	import { download, displayDate } from '$lib/utils'
+	import { sendUserToast } from '$lib/toast'
 	import { twMerge } from 'tailwind-merge'
 	import { getAiChatManager } from '../aiChatManagerContext'
 	import { planBadge, listOpenTarget, PLAN_MODE_TEXT_COLOR } from '../planMode'
@@ -11,6 +12,7 @@
 		artifactFilename,
 		artifactMimeType,
 		currentVersion,
+		type ArtifactVersion,
 		type PersistedArtifact
 	} from './artifactsDB'
 	import { planFirst } from './artifactsState.svelte'
@@ -24,6 +26,33 @@
 	const label = $derived(`${artifacts.length} artifact${artifacts.length === 1 ? '' : 's'}`)
 	const rowIcon = (a: PersistedArtifact) =>
 		a.role === 'plan' ? ClipboardList : a.kind === 'html' ? Code2 : FileText
+
+	// A row exports the version it opens. For a plan approved behind the head that is not
+	// `a.content`, which is a draft the user may have turned down — downloading it under the
+	// `plan` pill would hand them a document they never agreed to.
+	async function downloadRow(a: PersistedArtifact) {
+		const pinned = listOpenTarget(a)
+		let name = a.name
+		let content = a.content
+		if (typeof pinned === 'number') {
+			let snapshot: ArtifactVersion | undefined
+			try {
+				snapshot = await aiChatManager.artifacts.getVersion(a.id, pinned)
+			} catch {
+				sendUserToast('Could not read the approved version. Try again.', true)
+				return
+			}
+			// Pruned out from under the approval: the head is all there is, so say which
+			// version is leaving rather than exporting the draft as if it were the plan.
+			if (!snapshot) {
+				sendUserToast(`v${pinned} is no longer kept — downloading the current version.`)
+			} else {
+				name = snapshot.name
+				content = snapshot.content
+			}
+		}
+		download(artifactFilename({ name, kind: a.kind }), content, artifactMimeType(a.kind))
+	}
 
 	// Empty-at-0 gating is owned by the parent (SessionChangesBar) so the status
 	// line's separators stay correct; this renders unconditionally.
@@ -78,7 +107,7 @@
 			iconOnly
 			title="Download"
 			startIcon={{ icon: Download }}
-			onClick={() => download(artifactFilename(a), a.content, artifactMimeType(a.kind))}
+			onClick={() => downloadRow(a)}
 		/>
 		<Button
 			unifiedSize="xs"
