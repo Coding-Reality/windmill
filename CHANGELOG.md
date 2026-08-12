@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.788.1](https://github.com/windmill-labs/windmill/compare/v1.788.0...v1.788.1) (2026-08-12)
+
+
+### Bug Fixes
+
+* stream ansible playbook logs in real time ([#10669](https://github.com/windmill-labs/windmill/issues/10669)) ([dad4c10](https://github.com/windmill-labs/windmill/commit/dad4c10c8b06ce72d8d808ceea95c7d8efa4918d))
+
 ## [1.788.0](https://github.com/windmill-labs/windmill/compare/v1.787.0...v1.788.0) (2026-08-12)
 
 
