@@ -38,7 +38,7 @@ jobs:
           platforms: linux/amd64
           push: true
           build-args: |
-            features=ce
+            features=oss_core,all_languages,jemalloc,dind,agent_worker_server
             WM_BUILD_VERSION=${{ github.sha }}
             VITE_SSO_LOGOUT_URL=${{ inputs.sso_logout_url }}
           tags: |
