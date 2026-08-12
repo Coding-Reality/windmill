@@ -148,6 +148,7 @@ export async function runGlobalEval(
               : baseSystemMessage
         : undefined,
       isPlanModeActive: planMode?.isPlanModeActive,
+      isToolAvailable: planMode?.isToolAvailable,
       userMessage: prepareGlobalUserMessage(
         userPrompt,
         [],

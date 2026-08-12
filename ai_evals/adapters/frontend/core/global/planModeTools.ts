@@ -25,10 +25,16 @@ export function createEvalPlanTools(artifacts: {
 }): {
   tools: ProductionTool<{}>[];
   isPlanModeActive: () => boolean;
+  isToolAvailable: (name: string) => boolean;
 } {
   let planActive = true;
   return {
     isPlanModeActive: () => planActive,
+    // Withdrawn on approval, as production's tool getter does it: leaving it advertised
+    // invites a second hand-over of a plan already agreed, which would write a duplicate.
+    // Production would offer enter_plan_mode in its place; these cases stop at the first
+    // hand-over, so a fresh planning round belongs to a case of its own.
+    isToolAvailable: (name) => name !== EXIT_PLAN_MODE_TOOL || planActive,
     // Production offers one plan tool at a time and these cases start in plan mode, so
     // enter_plan_mode would only invite a turn spent entering a posture already held.
     tools: [
