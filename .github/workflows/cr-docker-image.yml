@@ -1,0 +1,46 @@
+name: Build CR Windmill image
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Image tag to publish
+        required: true
+        default: cr-sso-logout
+      sso_logout_url:
+        description: URL to send the browser to after Windmill logout
+        required: true
+        default: https://auth.cloud.coding-reality.com/realms/chatwoot/protocol/openid-connect/logout?client_id=windmill-global&post_logout_redirect_uri=https%3A%2F%2Fwindmill.cloud.coding-reality.com%2Fuser%2Flogin
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: linux/amd64
+          push: true
+          build-args: |
+            features=ce
+            WM_BUILD_VERSION=${{ github.sha }}
+            VITE_SSO_LOGOUT_URL=${{ inputs.sso_logout_url }}
+          tags: |
+            ghcr.io/coding-reality/windmill:${{ inputs.tag }}
+            ghcr.io/coding-reality/windmill:${{ github.sha }}
