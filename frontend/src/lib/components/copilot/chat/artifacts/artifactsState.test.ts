@@ -382,16 +382,6 @@ describe('SessionArtifactsStore', () => {
 		)
 	})
 
-	it('finds a plan another tab wrote after this store loaded', async () => {
-		// The loaded list was read before the other tab claimed the slot, so answering from it
-		// alone reports no plan — and the next proposal becomes a create the unique index
-		// refuses, instead of a revision of the document that is actually there.
-		await store.setSession('s1')
-		await dbMod.putArtifact(mk({ id: dbMod.planArtifactId('s1'), role: 'plan' }))
-
-		expect((await store.findPlanForSession('s1'))?.id).toBe(dbMod.planArtifactId('s1'))
-	})
-
 	it('gives two tabs proposing at once distinct versions, keeping both snapshots', async () => {
 		// The hazard the transaction exists for: read outside it and both tabs stamp the same
 		// next version, so one proposal and its snapshot vanish under the other.

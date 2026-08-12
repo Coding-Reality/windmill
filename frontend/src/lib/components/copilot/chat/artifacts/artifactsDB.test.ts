@@ -70,20 +70,6 @@ describe('artifactsDB', () => {
 		expect(db.artifactMimeType('html')).toBe('text/html')
 	})
 
-	it('answers "is this the agreed plan" about the version asked for', () => {
-		// A plan approved at v1, then revised into a proposal the user has not agreed to.
-		const plan = { role: 'plan' as const, approvedVersion: 1, version: 2 }
-		expect(db.isApprovedPlan(plan)).toBe(false)
-		// Someone reading v1 is reading the plan they agreed to — labelling that a draft
-		// because a later proposal exists is what the version argument is for.
-		expect(db.isApprovedPlan(plan, 1)).toBe(true)
-		expect(db.isApprovedPlan(plan, 2)).toBe(false)
-		// And the converse: an older version does not inherit the newest one's approval.
-		expect(db.isApprovedPlan({ role: 'plan', approvedVersion: 3, version: 3 }, 2)).toBe(false)
-		// Never a plan at all.
-		expect(db.isApprovedPlan({ approvedVersion: 1, version: 1 }, 1)).toBe(false)
-	})
-
 	it('round-trips an artifact through put/get', async () => {
 		await db.putArtifact(artifact({ id: 'x', name: 'Plan', content: 'body' }))
 		expect(await db.getArtifact('x')).toMatchObject({ id: 'x', name: 'Plan', content: 'body' })

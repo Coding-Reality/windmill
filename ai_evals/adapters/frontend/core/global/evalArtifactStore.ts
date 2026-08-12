@@ -63,10 +63,6 @@ export function createEvalArtifactHelpers(seed: SeededArtifact[] = []) {
     note,
   });
   const store = {
-    findPlanForSession: async (sessionId: string) =>
-      [...items.values()].find(
-        (a) => a.sessionId === sessionId && a.role === "plan",
-      ),
     create: async (sessionId: string, input: Record<string, any>) => {
       // One plan per session, as SessionArtifactsStore enforces it — the tool refuses
       // first, so reaching this means a case drove create_artifact past that message.

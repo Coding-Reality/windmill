@@ -60,20 +60,6 @@ export function currentVersion(a: Pick<PersistedArtifact, 'version'>): number {
 	return a.version ?? 1
 }
 
-/**
- * Whether the text of `atVersion` — the current one unless given — is the agreed plan.
- *
- * `atVersion` is for a reader looking at history: the answer belongs to the version on
- * screen, not the document, or the agreed plan reads as a draft the moment a later
- * proposal exists.
- */
-export function isApprovedPlan(
-	a: Pick<PersistedArtifact, 'role' | 'approvedVersion' | 'version'>,
-	atVersion?: number
-) {
-	return a.role === 'plan' && a.approvedVersion === (atVersion ?? currentVersion(a))
-}
-
 /** A session holds one plan, so its id is the session's — the primary key is the constraint,
  * and no two writers can mint a second row for the same session. */
 export function planArtifactId(sessionId: string): string {
@@ -164,31 +150,6 @@ export async function listArtifactsForSession(sessionId: string): Promise<Persis
 export interface ArtifactEdit {
 	artifact: PersistedArtifact
 	snapshots: ArtifactVersion[]
-}
-
-/**
- * Write an artifact and the snapshots that edit produced in one transaction.
- *
- * Never as two writes: a row stamped version N whose snapshot is missing still *reads*
- * as complete, because listVersions synthesizes N from the row itself — until the next
- * edit overwrites that row, at which point N's content is gone and the history has a
- * hole nothing can back-fill.
- */
-export async function putArtifactWithVersions(
-	artifact: PersistedArtifact,
-	snapshots: ArtifactVersion[]
-): Promise<void> {
-	const db = await getDB()
-	if (!db) return
-	try {
-		const tx = db.transaction(['items', 'versions'], 'readwrite')
-		await writeEdit(tx.objectStore('items'), tx.objectStore('versions'), { artifact, snapshots })
-		await tx.done
-	} catch (err) {
-		// A rejected write (most likely QuotaExceededError) leaves the artifact usable for the
-		// session but unpersisted — degrade like the reads rather than throwing at the caller.
-		console.error('Could not persist artifact', err)
-	}
 }
 
 async function writeEdit(

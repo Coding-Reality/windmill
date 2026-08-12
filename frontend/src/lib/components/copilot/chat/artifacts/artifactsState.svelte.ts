@@ -116,12 +116,6 @@ export class SessionArtifactsStore {
 		return sortByUpdatedDesc(await listArtifactsForSession(sessionId))
 	}
 
-	/** The session's plan document, or undefined. Read by primary key, so it sees a plan
-	 * another tab wrote, which memory cannot. */
-	async findPlanForSession(sessionId: string): Promise<PersistedArtifact | undefined> {
-		return await getArtifact(planArtifactId(sessionId))
-	}
-
 	/** Persist a new artifact for `sessionId` and reflect it in the list if that session is loaded. */
 	async create(sessionId: string, input: CreateArtifactInput): Promise<PersistedArtifact> {
 		const now = Date.now()
