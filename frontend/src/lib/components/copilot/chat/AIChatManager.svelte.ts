@@ -587,11 +587,7 @@ export class AIChatManager {
 		this.autonomyMode === AIAutonomyMode.YOLO && this.autoAcceptToolConfirmationsAvailable
 	)
 	planModeAvailable = $derived(this.isSessionChat && supportsPlanMode(this.mode))
-	// Deliberately not `planModeAvailable`: the posture is what the user chose in this session,
-	// not a function of which editor the UI has open. Components change `mode` for their own
-	// reasons — the inline widget switches to SCRIPT just to open — and a read-only posture that
-	// lifts itself on an unrelated navigation is no posture at all.
-	planModeActive = $derived(this.autonomyMode === AIAutonomyMode.PLAN && this.isSessionChat)
+	planModeActive = $derived(this.autonomyMode === AIAutonomyMode.PLAN && this.planModeAvailable)
 	prePlanAutonomyMode = $state<AIAutonomyMode | undefined>(undefined)
 	// The posture's own state — its two tools, the plan document and the planning round.
 	// Everything it needs from this manager goes through the host above.
@@ -1850,6 +1846,13 @@ export class AIChatManager {
 	) {
 		if (!isAIModeVisible(mode)) return
 		if (mode === AIMode.SCRIPT && !tryGetCurrentModel()) return
+		// Plan mode lives in GLOBAL alone, so leaving it ends the posture — and ends it out loud,
+		// by handing the picker back to what preceded it. Letting the derivation drop it instead
+		// would leave "Plan" showing over a gate that has stopped refusing anything, and
+		// components switch mode for their own reasons: opening the inline widget alone gets here.
+		if (this.planModeActive && !supportsPlanMode(mode)) {
+			this.setAutonomyMode(this.prePlanAutonomyMode ?? AIAutonomyMode.DEFAULT)
+		}
 		this.mode = mode
 		this.pendingPrompt = pendingPrompt ?? ''
 		if (mode === AIMode.SCRIPT) {

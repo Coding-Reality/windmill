@@ -453,15 +453,6 @@ describe('AIChatManager plan mode posture', () => {
 			config.callbacks.onNewToken('<new_code>ok</new_code>')
 		})
 
-		// Through the mode switch, not around it: opening the widget runs changeMode(SCRIPT) —
-		// unrelated to plan mode, and never restored — so a posture derived from the mode would
-		// read as lifted here while the user still has Plan selected. changeMode refuses SCRIPT
-		// without a configured model, so the model has to be there for this to be the real path.
-		mocks.getCurrentModel.mockReturnValue({ provider: 'openai', model: 'gpt-4o' })
-		mocks.tryGetCurrentModel.mockReturnValue({ provider: 'openai', model: 'gpt-4o' })
-		manager.changeMode(AIMode.SCRIPT)
-		expect(manager.mode).toBe(AIMode.SCRIPT)
-
 		await manager.sendInlineRequest('tidy this up', 'let a = 1', {
 			startLineNumber: 1,
 			endLineNumber: 1
@@ -469,13 +460,32 @@ describe('AIChatManager plan mode posture', () => {
 
 		// The tool set handed to this request is real, so a gate that cannot see the posture
 		// would run every write the chat is holding back.
-		expect(manager.planModeActive).toBe(true)
 		expect(sent.callbacks.isPlanModeActive?.()).toBe(true)
 		// The transition is offered to the chat — just not here, where there is no card to
 		// confirm it with.
-		expect(sent.tools.map((t: any) => t.def.function.name)).not.toContain('exit_plan_mode')
-		manager.changeMode(AIMode.GLOBAL)
 		expect(manager.planMode.tools.map((t) => t.def.function.name)).toContain('exit_plan_mode')
+		expect(sent.tools.map((t: any) => t.def.function.name)).not.toContain('exit_plan_mode')
+	})
+
+	it('ends the posture out loud when the chat leaves the mode plan mode lives in', async () => {
+		// Plan mode is GLOBAL-only, and components switch mode for their own reasons — opening
+		// the inline widget runs changeMode(SCRIPT) and never puts it back. Letting the
+		// derivation quietly drop the posture would leave the picker showing Plan over a gate
+		// that has stopped refusing anything.
+		const manager = sessionManager(AIAutonomyMode.ACCEPT_EDIT)
+		manager.setAutonomyMode(AIAutonomyMode.PLAN)
+		expect(manager.planModeActive).toBe(true)
+
+		// changeMode refuses SCRIPT without a configured model, so the model has to be there
+		// for this to reach the real path instead of returning early.
+		mocks.getCurrentModel.mockReturnValue({ provider: 'openai', model: 'gpt-4o' })
+		mocks.tryGetCurrentModel.mockReturnValue({ provider: 'openai', model: 'gpt-4o' })
+		manager.changeMode(AIMode.SCRIPT)
+
+		expect(manager.mode).toBe(AIMode.SCRIPT)
+		expect(manager.planModeActive).toBe(false)
+		// Handed back to the posture plan mode was entered from, so picker and gate agree.
+		expect(manager.autonomyMode).toBe(AIAutonomyMode.ACCEPT_EDIT)
 	})
 
 	it('never auto-accepts an enter_plan_mode card, whichever side of the switch it lands on', async () => {
