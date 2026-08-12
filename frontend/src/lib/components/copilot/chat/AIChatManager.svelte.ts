@@ -1846,13 +1846,6 @@ export class AIChatManager {
 	) {
 		if (!isAIModeVisible(mode)) return
 		if (mode === AIMode.SCRIPT && !tryGetCurrentModel()) return
-		// Plan mode lives in GLOBAL alone, so leaving it ends the posture — and ends it out loud,
-		// by handing the picker back to what preceded it. Letting the derivation drop it instead
-		// would leave "Plan" showing over a gate that has stopped refusing anything, and
-		// components switch mode for their own reasons: opening the inline widget alone gets here.
-		if (this.planModeActive && !supportsPlanMode(mode)) {
-			this.setAutonomyMode(this.prePlanAutonomyMode ?? AIAutonomyMode.DEFAULT)
-		}
 		this.mode = mode
 		this.pendingPrompt = pendingPrompt ?? ''
 		if (mode === AIMode.SCRIPT) {
@@ -2375,12 +2368,7 @@ export class AIChatManager {
 					return base
 				},
 				get tools() {
-					// Both transitions are confirmation-gated, so a caller with no confirmation
-					// channel (the editor's inline widget) must not be offered them: processToolCall
-					// runs a tool whose confirmation it cannot ask for, which would enter or leave
-					// plan mode on the user's behalf.
-					const planTools = callbacks.requestConfirmation ? self.planMode.tools : []
-					return [...self.tools, ...planTools]
+					return [...self.tools, ...self.planMode.tools]
 				},
 				get helpers() {
 					return self.helpers
@@ -2506,11 +2494,7 @@ export class AIChatManager {
 					},
 					onMessageEnd: () => {},
 					setToolStatus: () => {},
-					removeToolStatus: () => {},
-					// The posture belongs to the session, not to one request: this widget shares the
-					// manager, so without it the gate reads "not planning" and every mutating tool
-					// the chat is holding back would run from here instead.
-					isPlanModeActive: () => this.planModeActive
+					removeToolStatus: () => {}
 				},
 				systemMessage
 			}
