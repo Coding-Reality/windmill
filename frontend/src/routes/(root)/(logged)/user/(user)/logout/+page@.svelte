@@ -2,6 +2,7 @@
 	import { page } from '$app/state'
 	import CenteredModal from '$lib/components/CenteredModal.svelte'
 	import { clearUser } from '$lib/logout'
+	import { getPostLogoutUrl } from '$lib/logoutKit'
 	import { isValidLogoutRedirect } from '$lib/logoutRedirect'
 	import { userStore } from '$lib/stores'
 	import { onMount } from 'svelte'
@@ -33,7 +34,7 @@
 		if (rd && isValidLogoutRedirect(rd)) {
 			window.location.href = rd
 		} else {
-			window.location.href = '/user/login'
+			window.location.href = getPostLogoutUrl()
 		}
 	})
 </script>

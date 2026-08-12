@@ -5,6 +5,21 @@ import { goto } from '$lib/navigation'
 import { clearUser } from './logout'
 import { sendUserToast } from './toast'
 
+const ssoLogoutUrl = import.meta.env.VITE_SSO_LOGOUT_URL?.trim()
+
+export function getPostLogoutUrl(): string {
+	return ssoLogoutUrl || '/user/login'
+}
+
+export function goToPostLogoutUrl(): void {
+	const postLogoutUrl = getPostLogoutUrl()
+	if (postLogoutUrl.startsWith('/')) {
+		goto(postLogoutUrl, { replaceState: true })
+	} else {
+		window.location.href = postLogoutUrl
+	}
+}
+
 export async function logoutWithRedirect(rd?: string): Promise<void> {
 	console.log('logoutWithRedirect', rd)
 	await clearUser()
@@ -23,6 +38,6 @@ export async function logoutWithRedirect(rd?: string): Promise<void> {
 
 export async function logout(): Promise<void> {
 	await clearUser()
-	goto(`/user/login`)
+	goToPostLogoutUrl()
 	sendUserToast('you have been logged out')
 }

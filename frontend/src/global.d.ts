@@ -15,6 +15,7 @@ declare namespace svelte.JSX {
 // Vite environment variables
 interface ImportMetaEnv {
 	readonly VITE_APP_TITLE: string
+	readonly VITE_SSO_LOGOUT_URL?: string
 	// Add other env variables as needed
 	readonly REMOTE?: string
 	readonly REMOTE_LSP?: string

@@ -82,6 +82,7 @@ COPY /python-client/docs/ /frontend/static/pydocs/
 RUN npm run generate-backend-client
 ENV NODE_OPTIONS "--max-old-space-size=8192"
 ARG VITE_BASE_URL ""
+ARG VITE_SSO_LOGOUT_URL=""
 # Must be declared for the build-arg to reach the bundle. See frontend/svelte.config.js.
 ARG WM_BUILD_VERSION=""
 # Read more about macro in docker/dev.nu
