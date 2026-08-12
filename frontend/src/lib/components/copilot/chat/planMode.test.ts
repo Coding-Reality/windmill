@@ -4,6 +4,7 @@ import {
 	derivePlanTitle,
 	exitPlanModeRejection,
 	isPlanCardTool,
+	listOpenTarget,
 	planCardState,
 	planVersionTarget,
 	planVersionView,
@@ -172,6 +173,18 @@ describe('planVersionTarget', () => {
 		expect(planVersionTarget(undefined, 2)).toBe('latest')
 		// A single-version document has `version` unset.
 		expect(planVersionTarget({}, 1)).toBe('latest')
+	})
+})
+
+describe('listOpenTarget', () => {
+	it('names a version for a plan and none for an ordinary artifact', () => {
+		// `'latest'` clears the tab's pin; only omitting it keeps the reader where they were,
+		// and an ordinary artifact's version is theirs to choose.
+		expect(listOpenTarget({ version: 3 })).toBeUndefined()
+		expect(listOpenTarget({ version: 3, approvedVersion: 2 })).toBeUndefined()
+		expect(listOpenTarget({ role: 'plan', version: 3, approvedVersion: 2 })).toBe(2)
+		expect(listOpenTarget({ role: 'plan', version: 3, approvedVersion: 3 })).toBe('latest')
+		expect(listOpenTarget({ role: 'plan', version: 3 })).toBe('latest')
 	})
 })
 

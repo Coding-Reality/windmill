@@ -84,6 +84,20 @@ export function planVersionTarget(
 	return doc && wanted !== undefined && wanted < (doc.version ?? 1) ? wanted : 'latest'
 }
 
+/**
+ * What a click in the artifact list should open. Only a plan names a version, because only a
+ * plan has one the reader did not pick: for anything else, naming `'latest'` would throw away
+ * the version they pinned on that tab, which omitting it is what preserves.
+ */
+export function listOpenTarget(artifact: {
+	role?: 'plan'
+	version?: number
+	approvedVersion?: number
+}): ArtifactVersionTarget | undefined {
+	if (artifact.role !== 'plan') return undefined
+	return planVersionTarget(artifact, artifact.approvedVersion)
+}
+
 /** The only posture that refuses work, so the only one colouring the whole trigger: the
  * user has to see from the composer why an edit went nowhere. `!` beats the Button. */
 export const PLAN_MODE_TRIGGER_CLASS = `${PLAN_MODE_TINT} !border-teal-600/40 hover:bg-teal-600/[0.15] !text-teal-600 dark:!border-teal-500/40 dark:hover:bg-teal-500/[0.15] dark:!text-teal-500`
